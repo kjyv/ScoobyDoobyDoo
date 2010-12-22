@@ -1,3 +1,6 @@
+import com.aliasi.chunk.Chunking;
+import com.aliasi.corpus.ObjectHandler;
+
 import com.aliasi.lingmed.medline.parser.Article;
 import com.aliasi.lingmed.medline.parser.Abstract;
 import com.aliasi.lingmed.medline.parser.MedlineCitation;
@@ -13,6 +16,7 @@ import com.aliasi.tokenizer.StopTokenizerFactory;
 import com.aliasi.tokenizer.TokenizerFactory;
 
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashSet;
@@ -33,27 +37,27 @@ public class Tagger {
 	public static void main(String[] args) throws IOException {
 		long startTime = System.currentTimeMillis();
 
-		MedlineParser parser = new MedlineParser();
+		GeniaParser parser = new GeniaParser();
 		result = new StringBuilder("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n<results>\n");
-		CitationHandler handler = new CitationHandler(result);
+		GeniaHandler handler = new GeniaHandler(result);
 		parser.setHandler(handler);
-		for (String arg : args) {
-			if (arg.endsWith(".xml")) {
-				InputSource inputSource = new InputSource(arg);
-				parser.parse(inputSource);
-			} else {
-				throw new IllegalArgumentException(
-						"arguments must end with .xml");
-			}
+		if (args.length > 0)
+		{
+			FileInputStream fileIn = new FileInputStream(args[0]);
+			parser.parse(fileIn);
+		} else {
+			System.out.println("Error: Please supply a genia input file.");
+			System.exit(0);
 		}
+
 		result.append("</results>");
 		System.out.println(result);
-		System.err.println("genes tagged: " + handler.numFoundGenes);
+		System.err.println("\ngenes tagged: " + handler.numFoundGenes);
 		System.err.println("time: " + (System.currentTimeMillis() - startTime)
 				/ 1000.0 + "s");
 	}
 
-	static class CitationHandler implements MedlineHandler {
+	static class GeniaHandler implements ObjectHandler<GeniaMedlineCitation> {
 		long numFoundGenes = 0L;
 
 		HashSet<String> stopSet = new HashSet<String>(),
@@ -67,20 +71,10 @@ public class Tagger {
 		Pattern pGt;
 		Pattern pLt;
 		
-		public CitationHandler(StringBuilder result) throws IOException {			
+		public GeniaHandler(StringBuilder result) throws IOException {			
 			String line;
-			// read in stop words
-			/*BufferedReader stopWords = new BufferedReader(new FileReader(
-					"english_stop_words.txt"));
-			while ((line = stopWords.readLine()) != null) {
-				if (line.equals(""))
-					continue;
-				stopSet.add(line);
-			}
-			stopWords.close();
-			*/
-			
-			// read in tag names
+		
+			// read in gene dictionary
 			BufferedReader geneNames = new BufferedReader(new FileReader(
 					"genenames-2.txt"));
 			while ((line = geneNames.readLine()) != null) {
@@ -153,7 +147,7 @@ public class Tagger {
 			int numFoundGenes = 0;
 			char[] cs = text.toCharArray();
 
-			Tokenizer tokenizer = lcFactory.tokenizer(cs, 0, cs.length);
+			Tokenizer tokenizer = factory.tokenizer(cs, 0, cs.length);
 			for (String token : tokenizer) {
 				//tokenSet.add(token);
 				if (geneSet.contains(token)) {
@@ -169,6 +163,11 @@ public class Tagger {
 			}
 			this.numFoundGenes += numFoundGenes;
 			result.append(localResult);
+		}
+
+		@Override
+		public void handle(GeniaMedlineCitation citation) {
+			System.out.println(citation.pmid);
 		}
 	}
 }
