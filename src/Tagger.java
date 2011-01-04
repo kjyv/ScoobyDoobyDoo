@@ -96,51 +96,19 @@ public class Tagger {
 			this.result = result;
 		}
 
-		public void handle(MedlineCitation citation) {
-			result.append("<MedlineCitation>\n");
-
-			pmid = citation.pmid();
-			result.append("<PMID>" + pmid + "</PMID>\n");
-			// System.out.println("processing pmid=" + id);
-
-			Article article = citation.article();		
-			String titleText = article.articleTitleText();
-
-			result.append("<ArticleTitle>\n");
-			addText(titleText);
-			result.append("\n</ArticleTitle>\n");
-
-			Abstract abstrct = article.abstrct();
-			String abstractText;
-			if (abstrct != null
-					&& !(abstractText = abstrct.textWithoutTruncationMarker())
-							.equals("")) {
-				result.append("<AbstractText>\n");
-				addText(abstractText);
-				result.append("\n</AbstractText>\n");
-			}
+		public String tag(String text) {
+			/*
+			 * actual tagging method
+			 * in here we want
+			 * - tokenization
+			 * - gene tagging with dictionary
+			 * - POS
+			 * - gene tagging with language(medline) model
+			 * 
+			 * returns input with tags added
+			 */
 			
-			OtherAbstract oAbstracts[] = citation.otherAbstracts();
-			if (oAbstracts.length > 0){
-				//result.append("<OtherAbstract>\n");
-				for(OtherAbstract oAbstract : oAbstracts){
-					abstractText = oAbstract.text();
-					result.append("<AbstractText>\n");
-					addText(abstractText);
-					result.append("\n</AbstractText>");
-				}
-				//result.append("\n</OtherAbstract>\n");
-			}
-			
-			result.append("</MedlineCitation>\n");
-		}
-
-		public void delete(String pmid) {
-			throw new UnsupportedOperationException(
-					"not expecting deletes. found pmid=" + pmid);
-		}
-
-		public void addText(String text) {
+			//escape characters that conflict with xml tags
 			text = text.replaceAll("&", "&amp;").replaceAll(">", "&gt;").replaceAll("<", "&gt;");
 			
 			StringBuilder localResult = new StringBuilder(text);
@@ -162,12 +130,30 @@ public class Tagger {
 				}
 			}
 			this.numFoundGenes += numFoundGenes;
-			result.append(localResult);
+			return localResult.toString();
 		}
 
 		@Override
-		public void handle(GeniaMedlineCitation citation) {
-			System.out.println(citation.pmid);
+		public void handle(GeniaMedlineCitation citation) {	
+			result.append("<MedlineCitation>\n");
+
+			pmid = citation.pmid;
+			result.append("<PMID>" + pmid + "</PMID>\n");
+			// System.out.println("processing pmid=" + id);
+
+			result.append("<ArticleTitle>\n");
+			result.append("\n</ArticleTitle>\n");
+
+			result.append("<AbstractText>\n");
+			result.append(tag(citation.body));
+			result.append("\n</AbstractText>\n");
+					
+			result.append("</MedlineCitation>\n");
+		}
+		
+		public void delete(String pmid) {
+			throw new UnsupportedOperationException(
+					"not expecting deletes. found pmid=" + pmid);
 		}
 	}
 }
