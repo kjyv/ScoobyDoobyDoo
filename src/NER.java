@@ -8,6 +8,7 @@ import java.io.OutputStreamWriter;
 
 import com.aliasi.chunk.AbstractCharLmRescoringChunker;
 import com.aliasi.chunk.CharLmRescoringChunker;
+import com.aliasi.chunk.Chunk;
 import com.aliasi.chunk.ChunkerEvaluator;
 import com.aliasi.chunk.Chunking;
 import com.aliasi.chunk.ChunkingImpl;
@@ -107,23 +108,27 @@ class NER {
 		AbstractCharLmRescoringChunker chunker = (AbstractCharLmRescoringChunker) AbstractExternalizable
 				.readObject(modelFile);
 
+        Chunking chunking = chunker.chunk("Induction or suppression of a B cell-specific response to self antigen in vivo is dependent upon dendritic cell activation via the TNF-alpha receptor at the time of antigen uptake .");
+        System.out.println("Chunking=" + chunking);
+        for (Chunk chunk : chunking.chunkSet()){
+            System.out.println(chunk.toString() + "[" + chunk.type() + "]");
+        }
+		
 		//for ne-en-bio-genia.TokenShapeChunker
 		//TokenShapeChunker chunker = (TokenShapeChunker) AbstractExternalizable.readObject(modelFile);
-		
-		
-		//TODO: put me in Tagger
-		ChunkerEvaluator evaluator = new ChunkerEvaluator(chunker);
-		evaluator.setVerbose(true);
+
+		//ChunkerEvaluator evaluator = new ChunkerEvaluator(chunker);
+		//evaluator.setVerbose(true);
 
 		//GeniaParser parser = new GeniaParser();
 		//parser.setHandler(evaluator);
 
-		ChunkingImpl chunking = new ChunkingImpl("Induction or suppression of a B cell-specific response to self antigen in vivo is dependent upon dendritic cell activation via the TNF-alpha receptor at the time of antigen uptake .");
-		evaluator.handle(chunking);
+		//ChunkingImpl chunking = new ChunkingImpl("Induction or suppression of a B cell-specific response to self antigen in vivo is dependent upon dendritic cell activation via the TNF-alpha receptor at the time of antigen uptake .");
+		//evaluator.handle(chunking);
 		
 		//parser.parse(contentFile);
 
-		System.out.println(evaluator.toString());
+		//System.out.println(evaluator.toString());
 	}
 	
 	public static void preprocessContentFile(File file) throws IOException

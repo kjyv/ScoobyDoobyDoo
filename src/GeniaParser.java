@@ -3,6 +3,7 @@ import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,7 +21,7 @@ public class GeniaParser extends StringParser<ObjectHandler<GeniaMedlineCitation
     public String pid;
    
     public void parseString(char[] cs, int start, int end) {
-        String in = new String(cs,start,end-start);       
+        //String in = new String(cs,start,end-start);       
     }
     
     public void parse(FileInputStream fileIn) throws IOException {
@@ -28,20 +29,19 @@ public class GeniaParser extends StringParser<ObjectHandler<GeniaMedlineCitation
         DataInputStream in = new DataInputStream(fileIn);
         BufferedReader br = new BufferedReader(new InputStreamReader(in));
         String line = "";
-        GeniaMedlineCitation citation = new GeniaMedlineCitation(0, "");
+        GeniaMedlineCitation citation = new GeniaMedlineCitation(0, new LinkedList<String>());
         Matcher m;
 		while ((line = br.readLine()) != null){
 			m = pMEDLINE_HEADING.matcher(line);
 			if (m.find()) {
-				if (citation.body.length() > 0) {
+				if (citation.body.size() > 0) {
 					this.getHandler().handle(citation);
-					citation.body = "";
+					citation.body.clear();
 				}
 				citation.pmid = m.group(1);
-			} else { citation.body += line+" "; }
+			} else { citation.body.add(line); }
 		}
 		//handle last one
 		this.getHandler().handle(citation);
-
     }
 }
