@@ -10,6 +10,7 @@ import com.aliasi.lingmed.medline.parser.MedlineHandler;
 import com.aliasi.lingmed.medline.parser.MedlineParser;
 import com.aliasi.lingmed.medline.parser.OtherAbstract;
 
+import com.aliasi.tag.Tagging;
 import com.aliasi.tokenizer.IndoEuropeanTokenizerFactory;
 import com.aliasi.tokenizer.LowerCaseTokenizerFactory;
 import com.aliasi.tokenizer.RegExTokenizerFactory;
@@ -19,10 +20,13 @@ import com.aliasi.tokenizer.TokenizerFactory;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 
@@ -99,7 +103,7 @@ public class Tagger {
 			this.result = result;
 		}
 
-		public String tag(String text) {
+		public String tag(String text) throws IOException, ClassNotFoundException {
 			/*
 			 * actual tagging method
 			 * in here we want
@@ -125,18 +129,29 @@ public class Tagger {
 			HmmDecoder decoder = new HmmDecoder(hmm);
 			
 			Tokenizer tokenizer = factory.tokenizer(cs, 0, cs.length);
+		    String[] tokens = tokenizer.tokenize();
+			List<String> tokenList = Arrays.asList(tokens);
+			
+			Tagging<String> tagging = decoder.tag(tokenList);
+			
+			//ugly but have to tokenize again to iterate 
+			tokenizer = factory.tokenizer(cs, 0, cs.length);
+
+			int i = 0;  //token counter
 			for (String token : tokenizer) {
-				//tokenSet.add(token);
-				if (geneSet.contains(token)) {
-					// System.out.println(token);
-					// System.out.println("start: " +
-					// tokenizer.lastTokenStartPosition());
+				//get pos tag for current token
+				String tag = tagging.tag(i);
+				if (geneSet.contains(token) ){ //|| (tag.equals("NN") || tag.equals("NNP"))) {
+					//System.out.print(tagging.token(i) + "_" + tag + "\n");
+					
+					//insert gene tag into text
 					localResult.insert(tokenizer.lastTokenStartPosition()
 							+ numFoundGenes * 13, "<gene>");
 					localResult.insert(tokenizer.lastTokenEndPosition()
 							+ numFoundGenes * 13 + 6, "</gene>");
 					numFoundGenes++;
 				}
+				++i;
 			}
 			this.numFoundGenes += numFoundGenes;
 			return localResult.toString();
@@ -154,7 +169,17 @@ public class Tagger {
 			result.append("\n</ArticleTitle>\n");
 
 			result.append("<AbstractText>\n");
-			result.append(tag(citation.body));
+			
+			try {
+				result.append(tag(citation.body));
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ClassNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
 			result.append("\n</AbstractText>\n");
 					
 			result.append("</MedlineCitation>\n");

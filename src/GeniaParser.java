@@ -6,18 +6,9 @@ import java.io.InputStreamReader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.xml.sax.InputSource;
-
-import com.aliasi.chunk.BioTagChunkCodec;
-import com.aliasi.chunk.Chunking;
-import com.aliasi.chunk.TagChunkCodec;
-import com.aliasi.chunk.TagChunkCodecAdapters;
-
 import com.aliasi.corpus.ObjectHandler;
 import com.aliasi.corpus.StringParser;
 
-import com.aliasi.tag.LineTaggingParser;
-import com.aliasi.tag.Tagging;
 
 public class GeniaParser extends StringParser<ObjectHandler<GeniaMedlineCitation>> {
     

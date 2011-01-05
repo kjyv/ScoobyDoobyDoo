@@ -9,6 +9,8 @@ import java.io.OutputStreamWriter;
 import com.aliasi.chunk.AbstractCharLmRescoringChunker;
 import com.aliasi.chunk.CharLmRescoringChunker;
 import com.aliasi.chunk.ChunkerEvaluator;
+import com.aliasi.chunk.Chunking;
+import com.aliasi.chunk.ChunkingImpl;
 import com.aliasi.chunk.TokenShapeChunker;
 import com.aliasi.tokenizer.IndoEuropeanTokenizerFactory;
 import com.aliasi.tokenizer.TokenizerFactory;
@@ -50,14 +52,14 @@ class NER {
 			printUsage();
 			System.exit(1);
 		}
-		
-		System.out.print("preprocessing corpus file ... ");	System.out.flush();
-		preprocessContentFile(contentFile);
-		System.out.println("done.");	System.out.flush();
-		System.gc();
-		
+			
 		if(mode.toLowerCase().equals("train"))
 		{
+			System.out.print("preprocessing corpus file ... ");	System.out.flush();
+			preprocessContentFile(contentFile);
+			System.out.println("done.");	System.out.flush();
+			System.gc();
+			
 			System.out.print("training ... "); System.out.flush();
 			train();
 			System.out.println("done."); System.out.flush();
@@ -102,19 +104,24 @@ class NER {
 	
 	public static void evaluate() throws IOException, ClassNotFoundException
 	{
-		//AbstractCharLmRescoringChunker chunker = (AbstractCharLmRescoringChunker) AbstractExternalizable
-		//		.readObject(modelFile);
+		AbstractCharLmRescoringChunker chunker = (AbstractCharLmRescoringChunker) AbstractExternalizable
+				.readObject(modelFile);
 
 		//for ne-en-bio-genia.TokenShapeChunker
-		TokenShapeChunker chunker = (TokenShapeChunker) AbstractExternalizable.readObject(modelFile);
+		//TokenShapeChunker chunker = (TokenShapeChunker) AbstractExternalizable.readObject(modelFile);
 		
+		
+		//TODO: put me in Tagger
 		ChunkerEvaluator evaluator = new ChunkerEvaluator(chunker);
 		evaluator.setVerbose(true);
 
-		Conll2002ChunkTagParser parser = new Conll2002ChunkTagParser();
-		parser.setHandler(evaluator);
+		//GeniaParser parser = new GeniaParser();
+		//parser.setHandler(evaluator);
 
-		parser.parse(contentFile);
+		ChunkingImpl chunking = new ChunkingImpl("Induction or suppression of a B cell-specific response to self antigen in vivo is dependent upon dendritic cell activation via the TNF-alpha receptor at the time of antigen uptake .");
+		evaluator.handle(chunking);
+		
+		//parser.parse(contentFile);
 
 		System.out.println(evaluator.toString());
 	}
@@ -123,7 +130,7 @@ class NER {
 	{
 		//tags other than [B|I]-[protein|dna|rna] should be ignored => preprocess train file to replace other tags with O
 		String fileContent = readFileAsString(file);
-		fileContent = fileContent.replaceAll("(B-cell_line|B-cell_type|I-cell_line|I-cell_type)\n", "O\n");
+		fileContent = fileContent.replaceAll("\r", "").replaceAll("(B-cell_line|B-cell_type|I-cell_line|I-cell_type)\n", "O\n");
 		OutputStreamWriter out = new OutputStreamWriter(new FileOutputStream(file));
 		out.write(fileContent);
 		out.close();
