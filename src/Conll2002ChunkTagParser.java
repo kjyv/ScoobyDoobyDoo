@@ -56,7 +56,7 @@ public class Conll2002ChunkTagParser extends StringParser<ObjectHandler<Chunking
         = "-DOCSTART(.*)";  // lines that start with "-DOCSTART" are ignored
     */
     static final String IGNORE_LINE_REGEX
-    	= "###MEDLINE(.*)";	// lines that start with "###MEDLINE" are ignored
+    	= "###MEDLINE:(\\d+)";	// lines that start with "###MEDLINE" are ignored
     static final String EOS_REGEX
         = "\\A\\Z";         // empty lines end a sentence => "the zone currently being processed is sent to the handler": http://alias-i.com/lingpipe/docs/api/index.html
 

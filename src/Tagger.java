@@ -1,6 +1,8 @@
 import com.aliasi.chunk.Chunking;
 import com.aliasi.corpus.ObjectHandler;
 
+import com.aliasi.hmm.HiddenMarkovModel;
+import com.aliasi.hmm.HmmDecoder;
 import com.aliasi.lingmed.medline.parser.Article;
 import com.aliasi.lingmed.medline.parser.Abstract;
 import com.aliasi.lingmed.medline.parser.MedlineCitation;
@@ -19,6 +21,7 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.HashSet;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
@@ -103,7 +106,7 @@ public class Tagger {
 			 * - tokenization
 			 * - gene tagging with dictionary
 			 * - POS
-			 * - gene tagging with language(medline) model
+			 * - gene tagging with language(medline) model (NER)
 			 * 
 			 * returns input with tags added
 			 */
@@ -115,6 +118,12 @@ public class Tagger {
 			int numFoundGenes = 0;
 			char[] cs = text.toCharArray();
 
+			FileInputStream fileIn = new FileInputStream("pos-en-bio-genia.HiddenMarkovModel");
+			ObjectInputStream objIn = new ObjectInputStream(fileIn);
+			HiddenMarkovModel hmm = (HiddenMarkovModel) objIn.readObject();
+			objIn.close();
+			HmmDecoder decoder = new HmmDecoder(hmm);
+			
 			Tokenizer tokenizer = factory.tokenizer(cs, 0, cs.length);
 			for (String token : tokenizer) {
 				//tokenSet.add(token);

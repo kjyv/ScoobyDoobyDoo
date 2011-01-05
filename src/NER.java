@@ -9,18 +9,10 @@ import java.io.OutputStreamWriter;
 import com.aliasi.chunk.AbstractCharLmRescoringChunker;
 import com.aliasi.chunk.CharLmRescoringChunker;
 import com.aliasi.chunk.ChunkerEvaluator;
+import com.aliasi.chunk.TokenShapeChunker;
 import com.aliasi.tokenizer.IndoEuropeanTokenizerFactory;
 import com.aliasi.tokenizer.TokenizerFactory;
 import com.aliasi.util.AbstractExternalizable;
-
-/*
-TODO:
-
-
-
-
- */
-
 
 class NER {
 	static final int NUM_CHUNKINGS_RESCORED = 64;
@@ -110,9 +102,12 @@ class NER {
 	
 	public static void evaluate() throws IOException, ClassNotFoundException
 	{
-		AbstractCharLmRescoringChunker chunker = (AbstractCharLmRescoringChunker) AbstractExternalizable
-				.readObject(modelFile);
+		//AbstractCharLmRescoringChunker chunker = (AbstractCharLmRescoringChunker) AbstractExternalizable
+		//		.readObject(modelFile);
 
+		//for ne-en-bio-genia.TokenShapeChunker
+		TokenShapeChunker chunker = (TokenShapeChunker) AbstractExternalizable.readObject(modelFile);
+		
 		ChunkerEvaluator evaluator = new ChunkerEvaluator(chunker);
 		evaluator.setVerbose(true);
 
