@@ -29,7 +29,6 @@ import java.util.regex.Pattern;
 
 public class Tagger {
 
-	static final double CHUNK_SCORE = 1.0;
 	static StringBuilder result;
 
 	/**
@@ -123,7 +122,16 @@ public class Tagger {
 			tagged_text = escapeXML(text);
 	    	
 			StringBuilder localResult = new StringBuilder();
-			//int numFoundGenes = 0;
+			
+			//check dict first	
+			for(int tokenIndex = 0; tokenIndex < text.size(); tokenIndex++)
+			{
+				String token = text.get(tokenIndex);
+				if (geneSet.contains(token)){
+					tagged_text.set(tokenIndex, "<gene>"+token+"</gene>");
+					this.numFoundGenes++;
+				}
+			}
 			
 			// Part Of Speech (POS) - tagging
 			Tagging<String> POSTagging = POSDecoder.tag(text);	// contains lists of tokens and assigned tags
@@ -163,7 +171,7 @@ public class Tagger {
 				if(geneSet.contains(token)) {
 					check_dict = true;
 				} else {
-				    //pos with last token (likely to be the noun of a multi-word gene)
+				    //pos with last token (likely to be the noun of a multi-word gene; for english text)
 				    String tag = POSTagging.tag(index_end);
 					if(tag.equals("NN") || tag.equals("NNP") || tag.equals("NNS") || tag.equals("NNPS")){
 						check_pos = true;
@@ -171,9 +179,11 @@ public class Tagger {
 				}
 			    
 			    if (check_dict || check_pos) {
-			    	tagged_text.set(index_start, "<gene>"+tagged_text.get(index_start));
-			    	tagged_text.set(index_end, tagged_text.get(index_end)+"</gene>");
-					this.numFoundGenes++;
+			    	if(!tagged_text.get(index_start).startsWith("<gene>")){
+			    		tagged_text.set(index_start, "<gene>"+tagged_text.get(index_start));
+			    		tagged_text.set(index_end, tagged_text.get(index_end)+"</gene>");
+			    		this.numFoundGenes++;
+			    	}
 			    }
 			}
 			
