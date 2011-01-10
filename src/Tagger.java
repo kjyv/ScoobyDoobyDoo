@@ -187,7 +187,7 @@ public class Tagger {
 			    }
 			}
 			
-			localResult.append(join(tagged_text, " "));
+			localResult.append(joinSentences(tagged_text, " "));
 			
 			return localResult.toString();
 		}
@@ -199,6 +199,25 @@ public class Tagger {
 	        Iterator<String> iter = s.iterator();
 	        while (iter.hasNext()) {
 	            buffer.append(iter.next());
+	            if (iter.hasNext()) {
+	                buffer.append(delimiter);
+	            }
+	        }
+	        return buffer.toString();
+	    }
+
+		public String joinSentences(Collection<String> s, String delimiter)
+		{
+			//additionally insert \n on . 
+	        StringBuffer buffer = new StringBuffer();
+	        Iterator<String> iter = s.iterator();
+	        String current = "";
+	        while (iter.hasNext()) {
+	        	current = iter.next();
+	            buffer.append(current);
+	            if (current.equals(".")){
+	            	buffer.append("\n");
+	            }
 	            if (iter.hasNext()) {
 	                buffer.append(delimiter);
 	            }
