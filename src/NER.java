@@ -108,27 +108,27 @@ class NER {
 		AbstractCharLmRescoringChunker chunker = (AbstractCharLmRescoringChunker) AbstractExternalizable
 				.readObject(modelFile);
 
-        Chunking chunking = chunker.chunk("Induction or suppression of a B cell-specific response to self antigen in vivo is dependent upon dendritic cell activation via the TNF-alpha receptor at the time of antigen uptake .");
+        /*Chunking chunking = chunker.chunk("Induction or suppression of a B cell-specific response to self antigen in vivo is dependent upon dendritic cell activation via the TNF-alpha receptor at the time of antigen uptake .");
         System.out.println("Chunking=" + chunking);
         for (Chunk chunk : chunking.chunkSet()){
             System.out.println(chunk.toString() + "[" + chunk.type() + "]");
-        }
+        }*/
 		
-		//for ne-en-bio-genia.TokenShapeChunker
-		//TokenShapeChunker chunker = (TokenShapeChunker) AbstractExternalizable.readObject(modelFile);
+		//for ne-en-bio-genia.TokenShapeChunker	
+		//TokenShapeChunker chunker = (TokenShapeChunker) AbstractExternalizable.readObject(new File("ne-en-bio-genia.TokenShapeChunker"));
 
-		//ChunkerEvaluator evaluator = new ChunkerEvaluator(chunker);
-		//evaluator.setVerbose(true);
+		ChunkerEvaluator evaluator = new ChunkerEvaluator(chunker);
+		evaluator.setVerbose(false);
 
 		//GeniaParser parser = new GeniaParser();
 		//parser.setHandler(evaluator);
 
-		//ChunkingImpl chunking = new ChunkingImpl("Induction or suppression of a B cell-specific response to self antigen in vivo is dependent upon dendritic cell activation via the TNF-alpha receptor at the time of antigen uptake .");
-		//evaluator.handle(chunking);
+		ChunkingImpl chunking = new ChunkingImpl("Induction or suppression of a B cell-specific response to self antigen in vivo is dependent upon dendritic cell activation via the TNF-alpha receptor at the time of antigen uptake .");
+		evaluator.handle(chunking);
 		
 		//parser.parse(contentFile);
 
-		//System.out.println(evaluator.toString());
+		System.out.println(evaluator.toString());
 	}
 	
 	public static void preprocessContentFile(File file) throws IOException

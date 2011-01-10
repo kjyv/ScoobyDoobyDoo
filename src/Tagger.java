@@ -118,7 +118,10 @@ public class Tagger {
 			 * 
 			 * returns input with tags added
 			 */
-			
+	    	
+			List<String> tagged_text = new LinkedList<String>(text);
+			tagged_text = escapeXML(text);
+	    	
 			StringBuilder localResult = new StringBuilder();
 			//int numFoundGenes = 0;
 			
@@ -126,84 +129,59 @@ public class Tagger {
 			Tagging<String> POSTagging = POSDecoder.tag(text);	// contains lists of tokens and assigned tags
 
 			// Named Entity Recognition (NER) decoder
-			Tagging<String> NERTagging = NERDecoder.tag(text);
+			//Tagging<String> NERTagging = NERDecoder.tag(text);
 
 			//NER chunker
 			AbstractCharLmRescoringChunker chunker = (AbstractCharLmRescoringChunker) AbstractExternalizable
 			.readObject(new File("test_chunker"));
    
 			Chunking chunking = chunker.chunk(join(text, " "));
-			System.out.println("Chunking=" + chunking);
+			//System.out.println("Chunking=" + chunking);
 			for (Chunk chunk : chunking.chunkSet()){
-			    System.out.println(chunk.toString() + "[" + chunk.type() + "]");
-			}
-		
-			// iterate through POS and NER lists and geneSet to determine genes
-			int numTokens = text.size();
-			List<String> currentGene = new LinkedList<String>();
-			String tag;
-			for(int tokenIndex = 0; tokenIndex < numTokens; tokenIndex++)
-			{
-				tag = NERTagging.tag(tokenIndex);
-				String currentToken = NERTagging.token(tokenIndex);
-					if (tag.equals("MM_O") || tag.equals("WW_O_GENE")){
-						handleNEREndOfGene(currentGene, currentToken, tokenIndex, POSTagging, NERTagging, localResult);
-						if(tokenIndex > 0)
-						{
-							localResult.append(" ");
-						}
-						localResult.append(escapeXML(currentToken));
+			    //System.out.println(chunk.toString() + "[" + chunk.type() + "]: "+  chunking.charSequence().subSequence(chunk.start(), chunk.end()));
+
+			    String text_linear = join(text, " ");
+				String token = text_linear.substring(chunk.start(), chunk.end());
+
+				//double check if we really have a gene using dict and pos
+				boolean check_pos = false, check_dict = false;
+			    int index_start = 0;
+			    int index_end = 0;
+			    
+			    //get index of tokens in sequence
+				int start = chunk.start();
+			    int end = chunk.end();
+			    int count = 0;
+			    while(count < end){
+			    	index_end++;
+			    	if (count < start){
+			    		index_start++;
+			    	}
+			    	count+= text.get(index_end).length()+1;
+			    }
+			    
+				if(geneSet.contains(token)) {
+					check_dict = true;
+				} else {
+				    //pos with last token (likely to be the noun of a multi-word gene)
+				    String tag = POSTagging.tag(index_end);
+					if(tag.equals("NN") || tag.equals("NNP") || tag.equals("NNS") || tag.equals("NNPS")){
+						check_pos = true;
 					}
-					// NER determined within-gene token and // NER determined beginning-of-gene token
-					else if (tag.equals("I_GENE") || tag.equals("B_GENE") || tag.equals("W_GENE") ||
-							tag.equals("M_GENE") || tag.equals("E_GENE")) {	
-						
-						currentGene.add(currentToken);
-						if(tokenIndex == numTokens - 1)
-						{
-							// a gene was found, but there is no more loop to handle it. so do it here
-							handleNEREndOfGene(currentGene, currentToken, tokenIndex, POSTagging, NERTagging, localResult);
-						}
-					}
-					/*else 
-						throw new Exception("unknown tag: " + tag + " for token " + currentToken + " with index " + tokenIndex);
-					*/
+				}
+			    
+			    if (check_dict || check_pos) {
+			    	tagged_text.set(index_start, "<gene>"+tagged_text.get(index_start));
+			    	tagged_text.set(index_end, tagged_text.get(index_end)+"</gene>");
+					this.numFoundGenes++;
+			    }
 			}
+			
+			localResult.append(join(tagged_text, " "));
+			
 			return localResult.toString();
 		}
-		
-		// function to avoid duplicate code
-		public void handleNEREndOfGene(List<String> currentGene, String currentToken, int tokenIndex, Tagging<String> POSTagging, Tagging<String> NERTagging, StringBuilder localResult)
-		{
-			if(isGene(currentGene,
-					POSTagging.tags().subList(tokenIndex, tokenIndex+currentGene.size()),
-					NERTagging.tags().subList(tokenIndex, tokenIndex+currentGene.size())
-				))
-			{
-				String gene = escapeXML(join(currentGene, " "));
-				localResult.append(" <gene>").append(gene).append("</gene>");
-				currentGene.clear();
-				this.numFoundGenes++;
-			}
-		}
-		
-		// NER proposed tokens as a gene. use POSTags (and NERTags?) and geneSet to double-check
-		public boolean isGene(List<String> tokens, List<String> POSTags, List<String> NERTags)
-		{
-			if(tokens.size() == 0)
-				return false;
-			boolean atLeastOneKnownGene = false, atLeastOneNoun = false;
-			for(int tokenIndex = 0; tokenIndex < tokens.size(); tokenIndex++)
-			{
-				String token = tokens.get(tokenIndex);
-				String POSTag = POSTags.get(tokenIndex);
-				if(POSTag.equals("NN") || POSTag.equals("NNP"))
-					atLeastOneNoun = true;
-				if(geneSet.contains(token))
-					atLeastOneKnownGene = true;
-			}
-			return atLeastOneKnownGene || atLeastOneNoun;
-		}
+
 		
 		public String join(Collection<String> s, String delimiter)
 		{
@@ -223,7 +201,14 @@ public class Tagger {
 			return toBeEscaped.replaceAll("&", "&amp;").replaceAll(">", "&gt;").replaceAll("<", "&gt;");
 		}
 
-
+		private List<String> escapeXML(List<String> text) {
+			List<String> escaped = new LinkedList<String>();
+			for(String line : text)
+				escaped.add(escapeXML(line));
+			
+			return escaped;
+		}
+		
 		public void handle(GeniaMedlineCitation citation)
 		{	
 			result.append("<MedlineCitation>\n");
