@@ -140,9 +140,12 @@ public class Tagger {
 			//Tagging<String> NERTagging = NERDecoder.tag(text);
 
 			//NER chunker
-			AbstractCharLmRescoringChunker chunker = (AbstractCharLmRescoringChunker) AbstractExternalizable
-			.readObject(new File("test_chunker"));
+			//AbstractCharLmRescoringChunker chunker = (AbstractCharLmRescoringChunker) AbstractExternalizable
+			//.readObject(new File("test_chunker"));
    
+			HmmChunker chunker = (HmmChunker) AbstractExternalizable
+			.readObject(new File("ne-en-bio-genetag.HmmChunker"));
+			
 			Chunking chunking = chunker.chunk(join(text, " "));
 			//System.out.println("Chunking=" + chunking);
 			for (Chunk chunk : chunking.chunkSet()){
@@ -179,7 +182,12 @@ public class Tagger {
 				}
 			    
 			    if (check_dict || check_pos) {
-			    	if(!tagged_text.get(index_start).startsWith("<gene>")){
+			    	boolean already_tagged = false;
+			    	for(int i = index_start; i<index_end+1; i++){
+			    		if (tagged_text.get(i).contains("<gene>"))
+			    			already_tagged = true;
+			    	}
+			    	if(!already_tagged){
 			    		tagged_text.set(index_start, "<gene>"+tagged_text.get(index_start));
 			    		tagged_text.set(index_end, tagged_text.get(index_end)+"</gene>");
 			    		this.numFoundGenes++;
